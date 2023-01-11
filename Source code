@@ -1,0 +1,130 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+import warnings
+warnings.filterwarnings('ignore')
+# without sep = ';'
+loaded = pd.read_csv('https://raw.githubusercontent.com/btkhimsar/DataSets/master/winequality-red.csv')
+print(loaded, '\n')
+# After viewing data from above we know we need to give sep = ';'
+loaded = pd.read_csv('https://raw.githubusercontent.com/btkhimsar/DataSets/master/winequality-red.csv', sep = ';')
+print(loaded.head(), '\n')
+print('\n',loaded.columns)
+print(".................................................................................................................")
+# Learning about data
+# Getting dependancy of columns
+plt.figure(figsize=([10,10]))
+sns.heatmap(loaded.corr(), annot = True, cmap = 'coolwarm', linewidths = 2)
+plt.title('Heat Plot')
+plt.show()
+# point distribution w.r.t columns
+sns.pairplot(loaded[['pH', 'sulphates', 'alcohol', 'quality']])
+plt.title('Pair Plot')
+plt.show()
+quality = loaded[loaded.columns].groupby(['quality']).mean()
+# After above heatmap we get 'quality' of wine depends on 'alcohol' by 48%
+plt.bar(x= loaded['quality'], height = loaded['alcohol'])
+plt.xlabel('Quality')
+plt.ylabel('Alcohol %')
+plt.title("Alcohol vs Quality graph")
+plt.show()
+
+# Mean values of columns graph
+loaded.plot.box(figsize=([20,10]))
+plt.ylim([0,50])
+plt.title('Mean values of columns graph')
+plt.show()
+
+# About data
+a = loaded.quality.value_counts()
+b = loaded.quality.unique()
+count = pd.DataFrame({'quality_type':b, 'quality_count':a})
+print(count)
+plt.barh(y=b, width = a)
+plt.title('Quality frequency')
+plt.show()
+    # or directly use: hist
+loaded.quality.hist()
+plt.title('Quality frequency - 2')
+plt.show()
+
+loaded.hist(bins = 10,figsize=([10,15]))
+plt.title('All frequencies')
+plt.show()
+
+# About data in txt
+print(loaded.describe())
+print(loaded.dtypes)
+print(".................................................................................................................")
+# Checking for duplicates
+duplicates = loaded[loaded.duplicated()]
+print(duplicates)
+print(".................................................................................................................")
+# Checking for missing values
+print(loaded.info())
+#or
+print(loaded.isnull().sum())
+#or
+print(loaded.isna())
+
+loaded['grade'] = 1
+loaded.grade[loaded.quality < 6.5] = 0
+print(loaded.grade.head)
+#  0 = white wine & 1 = red wine
+
+print(".................................................................................................................")
+from sklearn.model_selection import train_test_split
+x = loaded.drop(['grade', 'quality'], axis = 1)
+y = loaded['grade']
+
+x_train, x_test, y_train, y_test = train_test_split(x,y)
+print(x_test, y_test)
+
+class Alg:
+    def RFC(self, x, y):
+        from sklearn.ensemble import RandomForestClassifier
+        reg = RandomForestClassifier(min_samples_split=3, criterion="entropy")
+        reg.fit(x,y)
+        return reg
+    def DTC(self, x, y):
+        from sklearn import tree
+        reg = tree.DecisionTreeClassifier()
+        reg.fit(x,y)
+        return reg
+    def SVCC(self, x, y):
+        from sklearn.svm import SVC
+        reg = SVC()
+        reg.fit(x,y)
+        return reg
+class ACC:
+    def ACC_(self, reg, x_, y_):
+        from sklearn.metrics import accuracy_score
+        acc_ = accuracy_score(y_, reg.predict(x_))
+        return acc_
+
+alg = Alg()
+m1 = alg.RFC(x_train, y_train)
+m2 = alg.DTC(x_train, y_train)
+m3 = alg.SVCC(x_train, y_train)
+
+accuracy = ACC()
+m1_acc = accuracy.ACC_(m1, x_train, y_train)
+m2_acc = accuracy.ACC_(m2, x_train, y_train)
+m3_acc = accuracy.ACC_(m3, x_train, y_train)
+m1_acct = accuracy.ACC_(m1, x_test, y_test)
+m2_acct = accuracy.ACC_(m2, x_test, y_test)
+m3_acct = accuracy.ACC_(m3, x_test, y_test)
+print("M1: Accuracy score of train {0}\nAccuracy score of test {1}\nM2: Accuracy score of train {2}\nAccuracy score of test {3}\nM3: Accuracy score of train {4}\nAccuracy score of test {5}".format(m1_acc, m1_acct,m2_acc, m2_acct, m3_acc, m3_acct))
+df = pd.DataFrame([[m1_acc, m2_acc, m3_acc], [m1_acct, m2_acct, m3_acct]], columns = ['ModelA', 'ModelB', 'ModelC'], index = ['train', 'test'])
+df.plot.bar()
+plt.show()
+df.plot.hist(bins = 20)
+plt.show()
+
+raw_input = np.array([5.8,0.13,0.22,12.7,0.058,24,183,0.9956,3.32,0.42,11.7]).reshape(1,-1)
+pred = m1.predict(raw_input)
+if pred == 0:
+    print("White Wine")
+else:
+    print("Red Wine")
